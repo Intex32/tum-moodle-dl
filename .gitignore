@@ -1,5 +1,4 @@
 config.json
-shell.nix
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
