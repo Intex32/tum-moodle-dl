@@ -8,7 +8,7 @@ def run(config):
   absolute_download_dir = f"{cwd}/tmp"
   
   for course in config["courses"]:
-    file = download(absolute_download_dir, course["id"], config["username"], config["password"], headless=config["headless"])
+    file = download(absolute_download_dir, course["id"], config["username"], config["password"], originalFilename=course["originalFilename"], headless=config["headless"])
     extract(file, course["destination"], course["update_policy"])
 
   os.rmdir(absolute_download_dir)

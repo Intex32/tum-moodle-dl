@@ -27,7 +27,7 @@ def find_newest_file(directory):
     latest_file = max(files, key=os.path.getctime)
     return latest_file
 
-def download(absolute_download_dir, course_id, username, password, headless=True):
+def download(absolute_download_dir, course_id, username, password, originalFilename=False, headless=True):
     options = Options()
     options.add_experimental_option("prefs", {
       "download.default_directory": absolute_download_dir,
@@ -57,7 +57,8 @@ def download(absolute_download_dir, course_id, username, password, headless=True
 
     # move to download page
     driver.get(f"https://www.moodle.tum.de/local/downloadcenter/index.php?courseid={course_id}")
-    driver.find_element(By.ID, "id_filesrealnames").click()
+    if originalFilename:
+        driver.find_element(By.ID, "id_filesrealnames").click()
     download_submit = driver.find_element(By.ID, "id_submitbutton")
     download_submit.click()
 
