@@ -171,3 +171,11 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# devenv
+.devenv*
+devenv.local.nix
+devenv.local.yaml
+.direnv
+
+.DS_Store
