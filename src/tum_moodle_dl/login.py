@@ -83,6 +83,11 @@ def shibboleth_login(
             response = _submit(http, form, values, button="_eventId_proceed")
         elif found := _code_field(forms):
             form, field = found
+            if form.value("isEnrollViaMultichallenge") == "true":
+                raise LoginError(
+                    "TUM wants you to set up two-factor login first. "
+                    "Log in once in a browser to do that, then run `tmdl login` again."
+                )
             if code_attempts >= MAX_CODE_ATTEMPTS:
                 raise BadOneTimeCode(error_text(response.text) or "one-time code rejected")
             previous_error = error_text(response.text) if code_attempts else None

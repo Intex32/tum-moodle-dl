@@ -1,7 +1,7 @@
 # TU·M·oo·DL
 **TUM moodle downloader** - a command-line tool that keeps local copies of your TUM Moodle courses up to date.
 
-- **logs in like a browser, without one**: TUM ID, password and the one-time code from your authenticator app, straight from the terminal. your password goes into the system keychain, and the session is reused until it expires.
+- **logs in like a browser, without one**: TUM ID and password, plus the one-time code from your authenticator app if your account uses two-factor login, straight from the terminal. your password goes into the system keychain, and the session is reused until it expires.
 - **syncs without losing anything**: new files are added and changed files are updated. a file you edited is never overwritten; Moodle's newer version is saved next to it as `name (moodle).ext`. nothing is ever deleted.
 - downloads each course through its Moodle **Download Center**, the same zip you get from the button on the course page.
 
@@ -12,7 +12,7 @@ uv tool install git+https://github.com/Intex32/tum-moodle-dl
 
 # usage
 ```sh
-tmdl login                       # asks for your TUM ID, password and a one-time code
+tmdl login                       # asks for your TUM ID, password and, with two-factor login, a code
 tmdl courses                     # lists your current courses (--all: past and future too)
 tmdl courses add 12345 analysis  # syncs these courses from now on: an ID or part of the name
 tmdl courses remove analysis     # stops syncing a course; its folder stays
@@ -35,7 +35,7 @@ original_filenames = true    # optional: per-course setting
 ```
 
 # unattended runs
-when the session has expired, `tmdl sync` logs in again by itself, but it needs a one-time code for that. to run it from cron, store your authenticator's secret (the text behind the QR code you scan when setting up an authenticator app, or the `otpauth://` link):
+when the session has expired, `tmdl sync` logs in again by itself. without two-factor login that needs nothing more; with it, it needs a one-time code. to run it from cron, store your authenticator's secret (the text behind the QR code you scan when setting up an authenticator app, or the `otpauth://` link):
 ```sh
 tmdl login --totp-secret
 ```

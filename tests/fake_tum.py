@@ -70,6 +70,7 @@ PI_PAGE = """<html><head><title>TUM Login - privacyIDEA</title></head><body>
 <div class="content">{body}
 <div class="form-options">
 <input id="mode" name="mode" value='{mode}' type="hidden">
+<input id="isEnrollViaMultichallenge" name="isEnrollViaMultichallenge" value='{enroll}' type="hidden">
 <input id="errorMessage" name="errorMessage" value="" type="hidden">
 <input id="passkeyChallenge" name="passkeyChallenge" value='{challenge}' type="hidden">
 <input id="passkeySignResponse" name="passkeySignResponse" value="" type="hidden">
@@ -127,13 +128,15 @@ class FakeTum:
         code: Callable[[], str] = lambda: "123456",
         code_field: str = "autocomplete",  # a CODE_FIELDS key, or "privacyidea"
         pi_mode: str = "otp",
+        pi_enroll: bool = False,  # privacyIDEA asks to set up a token instead
+        two_factor: bool = True,
         factor_choice: bool = False,
         courses: dict[int, tuple[str, str]] | None = None,
         files: dict[str, bytes] | None = None,
     ):
         self.username, self.password, self.code = username, password, code
         self.code_field, self.factor_choice = code_field, factor_choice
-        self.pi_mode = pi_mode
+        self.pi_mode, self.pi_enroll, self.two_factor = pi_mode, pi_enroll, two_factor
         self.remembered_device: list[bool] = []
         self.courses = courses or {
             5: ("Analysis für Informatik", "AfI WS25"),
@@ -188,6 +191,8 @@ class FakeTum:
             if (value("j_username"), value("j_password")) != (self.username, self.password):
                 error = '<section><p class="form-element form-error">The password you entered was incorrect.</p></section>'
                 return _html(LOGIN_PAGE.format(error=error))
+            if not self.two_factor:
+                return self._authenticated()
             return _html(FACTOR_PAGE) if self.factor_choice else self._code_page()
         if execution == "e1s3":
             assert "_eventId_totp" in form
@@ -207,12 +212,15 @@ class FakeTum:
             self.code_submissions.append((field, value(field)))
             if value(field) != self.code():
                 return self._code_page(error="Invalid one-time password.")
-            session = secrets.token_hex(8)
-            self.idp_sessions.add(session)
-            response = _html(SAML_PAGE)
-            response.headers["Set-Cookie"] = f"shib_idp_session={session}; Path=/idp; Secure"
-            return response
+            return self._authenticated()
         return httpx.Response(404)
+
+    def _authenticated(self) -> httpx.Response:
+        session = secrets.token_hex(8)
+        self.idp_sessions.add(session)
+        response = _html(SAML_PAGE)
+        response.headers["Set-Cookie"] = f"shib_idp_session={session}; Path=/idp; Secure"
+        return response
 
     def _code_page(self, error: str = "") -> httpx.Response:
         error_html = f'<p class="output--error">{error}</p>' if error else ""
@@ -222,7 +230,10 @@ class FakeTum:
             body, challenge = PI_OTP_BODY.format(error=error_html), ""
         else:
             body, challenge = PI_PASSKEY_BODY, "eyJjaGFsbGVuZ2UiOiJ4In0"
-        return _html(PI_PAGE.format(body=body, mode=self.pi_mode, challenge=challenge))
+        enroll = str(self.pi_enroll).lower()
+        return _html(
+            PI_PAGE.format(body=body, mode=self.pi_mode, challenge=challenge, enroll=enroll)
+        )
 
     # www.moodle.tum.de
 

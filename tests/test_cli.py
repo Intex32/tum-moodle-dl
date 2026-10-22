@@ -186,3 +186,14 @@ def test_new_config_explains_itself(logged_in, tmdl, tmp_path):
 def test_courses_lists_the_newest_first(logged_in, tmdl):
     listing = tmdl("courses").output
     assert listing.index("Analysis 2") < listing.index("Lineare Algebra") < listing.index("AfI")
+
+
+def test_without_two_factor_login_no_code_is_needed(monkeypatch, tmdl, config):
+    fake = FakeTum(two_factor=False)
+    monkeypatch.setattr(cli, "new_client", fake.client)
+    result = tmdl("login", input="go42tum\ncorrect horse\n")
+    assert "One-time code" not in result.output
+
+    fake.expire_sessions()  # logging in again works unattended, without a stored secret
+    result = tmdl("sync")
+    assert "logging in again" in result.output and "2 new" in result.output

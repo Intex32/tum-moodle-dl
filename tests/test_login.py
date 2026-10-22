@@ -53,6 +53,17 @@ def test_privacyidea_without_code_entry():
         login(PasskeyMode(code_field="privacyidea"))
 
 
+def test_account_without_two_factor_login():
+    fake = FakeTum(two_factor=False)
+    moodle, asked = login(fake)
+    assert moodle.sesskey and asked == []
+
+
+def test_setting_up_two_factor_login_needs_a_browser():
+    with pytest.raises(LoginError, match="set up two-factor login first"):
+        login(FakeTum(code_field="privacyidea", pi_enroll=True))
+
+
 def test_picks_the_authenticator_app_when_asked_for_a_second_factor():
     fake = FakeTum(factor_choice=True)
     moodle, _ = login(fake)
